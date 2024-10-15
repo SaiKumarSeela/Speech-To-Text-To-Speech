@@ -24,7 +24,7 @@ This project is a versatile web-based application that allows users to record sp
 
 ## Project Demo
 
-[![Watch this video](https://github.com/user-attachments/assets/310a0738-dfdb-47b9-bbe7-392a78a5c5bb)](https://github.com/user-attachments/assets/ed91f1d0-7b7c-4050-aca2-a1740e953502)
+[![SpeechToTextUI](https://github.com/user-attachments/assets/2eae02f2-16b1-4e8f-833d-89c477d25f0a)](https://github.com/user-attachments/assets/b098ad97-3ec3-40f9-b621-481e96d19bff)
 
 ## Setup Instructions
 
@@ -41,8 +41,8 @@ This project is a versatile web-based application that allows users to record sp
 #### Streamlit Version
 1. Clone the repository:
    ```bash
-   git clone <repository_url>
-   cd Speech-Transcription-Project
+   git clone https://github.com/SaiKumarSeela/Speech-To-Text-To-Speech.git
+   cd Speech-To-Text-To-Speech
    ```
 2. Run the Streamlit app:
    ```bash
