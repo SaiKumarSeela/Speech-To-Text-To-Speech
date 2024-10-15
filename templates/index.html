@@ -1,0 +1,137 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Speech-to-Text and Text-to-Speech App</title>
+    <link rel="stylesheet" href="../static/style.css">
+</head>
+
+<body>
+    <div class="container">
+        <h1>Speech-to-Text and Text-to-Speech App</h1>
+
+        <div class="option-selector">
+            <button id="sttButton" class="active">Speech to Text</button>
+            <button id="ttsButton">Text to Speech</button>
+        </div>
+
+        <div id="sttSection" class="section">
+            <h2>Speech to Text</h2>
+            <div class="audio-controls">
+                <button id="start">Start Recording</button>
+                <button id="stop" disabled>Stop Recording</button>
+            </div>
+            <audio id="audio" controls style="display:none;"></audio>
+            <div id="transcript"></div>
+        </div>
+
+        <div id="ttsSection" class="section" style="display:none;">
+            <h2>Text to Speech</h2>
+            <textarea id="ttsInput" placeholder="Enter text to convert to speech"></textarea>
+            <button id="generateSpeech">Generate Speech</button>
+            <audio id="ttsAudio" controls style="display:none;"></audio>
+        </div>
+    </div>
+
+    <script>
+        // Audio recording logic
+        var audioData = null;
+        const start = document.getElementById('start');
+        const stop = document.getElementById('stop');
+        const audio = document.getElementById('audio');
+        let recorder;
+        let chunks = [];
+
+        start.addEventListener('click', () => {
+            start.disabled = true;
+            stop.disabled = false;
+            chunks = [];
+            navigator.mediaDevices.getUserMedia({
+                    audio: true
+                })
+                .then(stream => {
+                    recorder = new MediaRecorder(stream);
+                    recorder.addEventListener('dataavailable', e => {
+                        chunks.push(e.data);
+                    });
+                    recorder.start();
+                });
+        });
+
+        stop.addEventListener('click', () => {
+            start.disabled = false;
+            stop.disabled = true;
+            recorder.stop();
+            recorder.addEventListener('stop', () => {
+                const blob = new Blob(chunks, {
+                    type: 'audio/wav'
+                });
+                const reader = new FileReader();
+                reader.readAsDataURL(blob);
+                reader.onloadend = function() {
+                    audioData = reader.result.split(',')[1]; // Get the Base64 part
+                    audio.src = URL.createObjectURL(blob);
+                    audio.style.display = 'block';
+                    // Send the audio data to FastAPI backend
+                    fetch("/upload-audio", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify({
+                                audioData: audioData
+                            })
+                        }).then(response => response.json())
+                        .then(data => {
+                            if (data.status === 'success') {
+                                document.getElementById('transcript').innerText = data.transcript;
+                            }
+                        });
+                };
+            });
+        });
+
+        // Text-to-Speech logic
+        document.getElementById('generateSpeech').addEventListener('click', () => {
+            const text = document.getElementById('ttsInput').value;
+            fetch("/text-to-speech", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        text: text
+                    })
+                }).then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        const ttsAudio = document.getElementById('ttsAudio');
+                        ttsAudio.src = data.audio_url;
+                        ttsAudio.style.display = 'block';
+                    } else {
+                        alert('Failed to generate speech. Please try again.');
+                    }
+                });
+        });
+
+        // Toggle between STT and TTS sections
+        document.getElementById('sttButton').addEventListener('click', () => {
+            document.getElementById('sttSection').style.display = 'block';
+            document.getElementById('ttsSection').style.display = 'none';
+            document.getElementById('sttButton').classList.add('active');
+            document.getElementById('ttsButton').classList.remove('active');
+        });
+
+        document.getElementById('ttsButton').addEventListener('click', () => {
+            document.getElementById('sttSection').style.display = 'none';
+            document.getElementById('ttsSection').style.display = 'block';
+            document.getElementById('ttsButton').classList.add('active');
+            document.getElementById('sttButton').classList.remove('active');
+        });
+    </script>
+</body>
+
+</html>

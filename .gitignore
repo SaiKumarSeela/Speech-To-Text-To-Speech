@@ -1,0 +1,7 @@
+stext/
+output.wav
+recorded_audio.wav
+textspeech.wav
+__pycache__/
+.env
+
